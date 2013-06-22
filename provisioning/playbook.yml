@@ -1,0 +1,150 @@
+---
+- hosts: vagrant
+  user: vagrant
+
+  vars:
+    gem_bin_path: ~/.rvm/gems/$ruby/bin
+    ruby: ruby-1.9.3
+    user: vagrant
+
+  tasks:
+    - name: update sudoers
+      action: copy src=templates/sudoers dest=/etc/sudoers
+      sudo: True
+
+    - name: update apt
+      action: command /usr/bin/apt-get update
+      sudo: True
+
+    - name: update cache 
+      apt: update_cache=yes
+      sudo: True
+
+    - name: install userspace packages
+      apt: pkg=$item state=installed
+      sudo: True
+      with_items:
+        - augeas-tools
+        - build-essential
+        - curl
+        - git
+        - libxml2-dev # Nokogiri
+        - libxslt1-dev # Nokogiri
+        - libyaml-dev
+        - libaugeas-dev
+        - libaugeas-ruby 
+        - libgdbm-dev
+        - libtool
+        - libffi-dev
+        - libpq-dev
+        - memcached
+        - postgresql-contrib
+        - python-dev
+        - python-setuptools
+        - python-software-properties
+        - pkg-config
+        - postgresql
+        - python-psycopg2
+        - ruby-rvm
+        - tmux
+        - vim
+        - whois
+        - xorg
+        - zsh
+
+    - name: switch to ZSH
+      user: name=$user shell=/usr/bin/zsh
+      sudo: True
+      tags: [packages, users]
+
+    #- name: install RVM
+    #  shell: curl -L https://get.rvm.io | bash -s -- --ignore-dotfiles creates=~/.rvm
+    #  tags: [ruby]
+    
+    # NEW POSTGRES CONF STUFF
+    
+    - name: install python libraries
+      action: easy_install name=psycopg2==2.4.5
+      sudo: True
+
+    - name: add postgres user to admin/sudo group
+      action: user name=postgres groups=sudo append=yes
+      sudo: True
+
+    - name: update postgres db configuration
+      action: copy src=templates/postgresql.conf dest=/etc/postgresql/9.1/main/postgresql.conf
+      sudo: True
+      notify:
+        - restart postgresql
+
+    - name: update postgres client configuration
+      action: copy src=templates/pg_hba.conf dest=/etc/postgresql/9.1/main/pg_hba.conf
+      sudo: True
+      notify:
+        - restart postgresql
+
+    #- name: create a test database user
+    #  action: postgresql_user user=vagrant 
+    #  sudo: True
+    #  sudo_user: postgres
+
+    #- name: create test database
+    #  action: postgresql_db name=vagrant_ansible_tutorial owner=vagrant
+    #  sudo: True
+    #  sudo_user: postgres
+
+      # END NEW POSTGRES CONF STUFF
+      
+    #won't work in debian?! wtf
+    #- name: update gem
+    #  action: command gem update --system
+    #  sudo: True
+
+    - name: install Ruby 
+      shell: rvm install --default 1.9.3-p429 creates=~/.rvm/rubies/$ruby
+      tags: [ruby]
+
+    - name: install base global gems
+      action: command rvm @global do gem install --no-ri --no-rdoc bundler pry pry-doc 
+
+    - name: install rails 
+      action: command rvm do gem install --no-ri --no-rdoc rails 
+
+    # for some reason this doesnt work, maybe because of rvm???
+    #- name: install base global gems
+    #  gem: name=$item state=present include_dependencies=True
+    #  sudo: True
+    #  tags: [ruby]
+    #  with_items:
+    #    - bundler
+    #    - pry
+    #    - pry-doc
+
+    #- name: install rails
+    #  gem: name=rails version=3.2.13 state=present
+    #  tags: [ruby]
+
+    - name:  install oh-my-zsh
+      shell: curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh
+      tags: [zsh]
+
+    - name: copy config files for vimrc
+      action: copy src=/Users/akira/.vimrc dest=/home/vagrant/.vimrc
+
+    - name: copy config files for zsh profile 
+      action: copy src=/Users/akira/.zprofile dest=/home/vagrant/.zprofile
+
+    - name: copy config files for bash aliases
+      action: copy src=/Users/akira/.bash_aliases dest=/home/vagrant/.bash_aliases
+
+    #use rsync for recursive file copying
+
+    #- name: recursively copy files from management server to target
+    #  local_action: command rsync -a /Users/akira/.oh-my-zsh $inventory_hostname:/home/vagrant/.oh-my-zsh
+
+    #- name: copy config files for vim
+    #  local_action: command rsync -a /Users/akira/.vim $inventory_hostname:/home/vagrant/.vim
+
+  handlers:
+    - name: restart postgresql
+      action: service name=postgresql state=restarted
