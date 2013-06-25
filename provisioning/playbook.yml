@@ -78,7 +78,8 @@
         - restart postgresql
 
     - name: update postgres client configuration
-      action: copy src=templates/pg_hba.conf dest=/etc/postgresql/9.1/main/pg_hba.conf
+      #action: copy src=templates/pg_hba.conf dest=/etc/postgresql/9.1/main/pg_hba.conf
+      action: template src=templates/pg_hba.conf.j2 dest=/etc/postgresql/9.1/main/pg_hba.conf
       sudo: True
       notify:
         - restart postgresql
@@ -138,13 +139,13 @@
       action: copy src=/Users/akira/.bash_aliases dest=/home/vagrant/.bash_aliases
 
     #use rsync for recursive file copying
+    - name: rsync recursive copy for oh my zsh 
+    local_action: shell rsync -puavxSH -e "ssh" --delete --owner=vagrant --chmod=u=rX,g=rX,o=rXw /Users/akira/.oh-my-zsh vagrant@192.168.111.8:/home/vagrant
 
-    #- name: recursively copy files from management server to target
-    #  local_action: command rsync -a /Users/akira/.oh-my-zsh $inventory_hostname:/home/vagrant/.oh-my-zsh
-
-    #- name: copy config files for vim
-    #  local_action: command rsync -a /Users/akira/.vim $inventory_hostname:/home/vagrant/.vim
+    - name: rsync recursive copy for vim config files 
+    local_action: shell rsync -puavxSH -e "ssh" --delete --owner=vagrant --chmod=u=rX,g=rX,o=rXw /Users/akira/.vim vagrant@192.168.111.8:/home/vagrant
 
   handlers:
     - name: restart postgresql
       action: service name=postgresql state=restarted
+      sudo: True
