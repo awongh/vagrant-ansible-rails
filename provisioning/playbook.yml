@@ -135,15 +135,21 @@
     - name: copy config files for zsh profile 
       action: copy src=/Users/akira/.zprofile dest=/home/vagrant/.zprofile
 
+    - name: copy config files for zshrc 
+      action: copy src=/Users/akira/.zshrc dest=/home/vagrant/.zshrc
+
+    - name: copy config files for zsh aliases 
+      action: copy src=/Users/akira/.aliases dest=/home/vagrant/.aliases
+
     - name: copy config files for bash aliases
       action: copy src=/Users/akira/.bash_aliases dest=/home/vagrant/.bash_aliases
 
     #use rsync for recursive file copying
     - name: rsync recursive copy for oh my zsh 
-    local_action: shell rsync -puavxSH -e "ssh" --delete --owner=vagrant --chmod=u=rX,g=rX,o=rXw /Users/akira/.oh-my-zsh vagrant@192.168.111.8:/home/vagrant
+      local_action: shell rsync -puavxSH -e "ssh" --delete --owner=vagrant --chmod=u=rX,g=rX,o=rXw /Users/akira/.oh-my-zsh vagrant@192.168.111.8:/home/vagrant
 
     - name: rsync recursive copy for vim config files 
-    local_action: shell rsync -puavxSH -e "ssh" --delete --owner=vagrant --chmod=u=rX,g=rX,o=rXw /Users/akira/.vim vagrant@192.168.111.8:/home/vagrant
+      local_action: shell rsync -puavxSH -e "ssh" --delete --owner=vagrant --chmod=u=rX,g=rX,o=rXw /Users/akira/.vim vagrant@192.168.111.8:/home/vagrant
 
   handlers:
     - name: restart postgresql

@@ -99,5 +99,4 @@ host    all             all             ::1/128                 md5
 #host    replication     postgres        ::1/128                 md5
 
 # Trust the Vagrant web VM
-host    all             all             192.168.100.10/32       trust
-host    all             all             ${vagrant_static_ip}/32       trust
+host    all             all             {{ vagrant_static_ip }}/32       trust
