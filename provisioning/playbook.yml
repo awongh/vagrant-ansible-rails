@@ -78,16 +78,17 @@
         - restart postgresql
 
     - name: update postgres client configuration
-      #action: copy src=templates/pg_hba.conf dest=/etc/postgresql/9.1/main/pg_hba.conf
       action: template src=templates/pg_hba.conf.j2 dest=/etc/postgresql/9.1/main/pg_hba.conf
       sudo: True
       notify:
         - restart postgresql
 
-    - name: create a test database user
-      action: postgresql_user user=vagrant 
+    - name: make sure vagrant user doesnt already exist
+      postgresql_user: db=template1 user=vagrant priv=ALL state=absent
       sudo: True
-      sudo_user: postgres
+
+    - name: create a vagrant super user 
+      shell: sudo -u postgres psql -d template1 -c "create user vagrant; alter user vagrant with superuser;"
 
     #- name: create test database
     #  action: postgresql_db name=vagrant_ansible_tutorial owner=vagrant
@@ -108,6 +109,11 @@
     - name: install rails 
       shell: /home/vagrant/.rvm/bin/rvm 1.9.3 do gem install --no-ri --no-rdoc rails
       sudo: False
+      tags: [ruby]
+
+    - name: install debugger with sudo 
+      shell: /home/vagrant/.rvm/bin/rvm 1.9.3 do gem install --no-ri --no-rdoc debugger -v 1.6.0 
+      sudo: True
       tags: [ruby]
 
     - name:  install oh-my-zsh
