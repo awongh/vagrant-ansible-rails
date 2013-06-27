@@ -45,21 +45,21 @@
         - pkg-config
         - postgresql
         - python-psycopg2
-        - ruby-rvm
         - tmux
         - vim
         - whois
         - xorg
         - zsh
 
-    - name: switch to ZSH
-      user: name=$user shell=/usr/bin/zsh
-      sudo: True
-      tags: [packages, users]
+    - name: install RVM
+      shell: curl -L https://get.rvm.io | bash
+      tags: [ruby]
+      sudo: False
 
-    #- name: install RVM
-    #  shell: curl -L https://get.rvm.io | bash -s -- --ignore-dotfiles creates=~/.rvm
-    #  tags: [ruby]
+    - name: source the rvm files
+      shell: /bin/bash -c 'source /home/vagrant/.rvm/scripts/rvm'
+      tags: [ruby]
+      sudo: False
     
     # NEW POSTGRES CONF STUFF
     
@@ -84,10 +84,10 @@
       notify:
         - restart postgresql
 
-    #- name: create a test database user
-    #  action: postgresql_user user=vagrant 
-    #  sudo: True
-    #  sudo_user: postgres
+    - name: create a test database user
+      action: postgresql_user user=vagrant 
+      sudo: True
+      sudo_user: postgres
 
     #- name: create test database
     #  action: postgresql_db name=vagrant_ansible_tutorial owner=vagrant
@@ -96,34 +96,19 @@
 
       # END NEW POSTGRES CONF STUFF
       
-    #won't work in debian?! wtf
-    #- name: update gem
-    #  action: command gem update --system
-    #  sudo: True
-
     - name: install Ruby 
-      shell: rvm install --default 1.9.3-p429 creates=~/.rvm/rubies/$ruby
+      shell: /home/vagrant/.rvm/bin/rvm install --default 1.9.3-p429 # creates=~/.rvm/rubies/$ruby
+      sudo: False
       tags: [ruby]
 
     - name: install base global gems
-      action: command rvm @global do gem install --no-ri --no-rdoc bundler pry pry-doc 
+      shell: /home/vagrant/.rvm/bin/rvm @global do gem install --no-ri --no-rdoc bundler pry pry-doc 
+      sudo: False
 
     - name: install rails 
-      action: command rvm do gem install --no-ri --no-rdoc rails 
-
-    # for some reason this doesnt work, maybe because of rvm???
-    #- name: install base global gems
-    #  gem: name=$item state=present include_dependencies=True
-    #  sudo: True
-    #  tags: [ruby]
-    #  with_items:
-    #    - bundler
-    #    - pry
-    #    - pry-doc
-
-    #- name: install rails
-    #  gem: name=rails version=3.2.13 state=present
-    #  tags: [ruby]
+      shell: /home/vagrant/.rvm/bin/rvm 1.9.3 do gem install --no-ri --no-rdoc rails
+      sudo: False
+      tags: [ruby]
 
     - name:  install oh-my-zsh
       shell: curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh
@@ -150,6 +135,11 @@
 
     - name: rsync recursive copy for vim config files 
       local_action: shell rsync -puavxSH -e "ssh" --delete --owner=vagrant --chmod=u=rX,g=rX,o=rXw /Users/akira/.vim vagrant@192.168.111.8:/home/vagrant
+
+    - name: switch to ZSH
+      user: name=$user shell=/usr/bin/zsh
+      sudo: True
+      tags: [packages, users]
 
   handlers:
     - name: restart postgresql

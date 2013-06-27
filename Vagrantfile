@@ -24,14 +24,13 @@ Vagrant.configure("2") do |config|
 
     # The environment key to set
     # this lets the vm know where the files are for the better_errors gem.
-    #config.host_path.env_key = "VAGRANT_HOST_PATH"
+    config.hostpath.env_key = "http_VAGRANT_HOST_PATH"
 
-    #config.host_path.path_file = "/tmp/.vagrant-host-path"
+    config.hostpath.path_file = "/tmp/.vagrant-host-path"
 
     # Profile script path
-    #config.host_path.profile_path = "/etc/zsh/zprofile"
-    #
-    #
+    config.hostpath.profile_path = "/etc/profile.d/vagrant-host-path.sh"
+    
     config.vm.provision :ansible do |ansible|
       ansible.playbook = "provisioning/playbook.yml"
       ansible.inventory_file = "provisioning/ansible_hosts"
