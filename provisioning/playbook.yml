@@ -84,11 +84,14 @@
         - restart postgresql
 
     - name: make sure vagrant user doesnt already exist
-      postgresql_user: db=template1 user=vagrant priv=ALL state=absent
-      sudo: True
+      shell: sudo -u postgres psql -d template1 -c "DROP USER IF EXISTS vagrant;"
+      notify:
+        - restart postgresql
 
     - name: create a vagrant super user 
       shell: sudo -u postgres psql -d template1 -c "create user vagrant; alter user vagrant with superuser;"
+      notify:
+        - restart postgresql
 
     #- name: create test database
     #  action: postgresql_db name=vagrant_ansible_tutorial owner=vagrant
@@ -107,13 +110,8 @@
       sudo: False
 
     - name: install rails 
-      shell: /home/vagrant/.rvm/bin/rvm 1.9.3 do gem install --no-ri --no-rdoc rails
+      shell: /home/vagrant/.rvm/bin/rvm 1.9.3-p429 do gem install --no-ri --no-rdoc rails -v 3.2.13
       sudo: False
-      tags: [ruby]
-
-    - name: install debugger with sudo 
-      shell: /home/vagrant/.rvm/bin/rvm 1.9.3 do gem install --no-ri --no-rdoc debugger -v 1.6.0 
-      sudo: True
       tags: [ruby]
 
     - name:  install oh-my-zsh
